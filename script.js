@@ -5,6 +5,23 @@
     });
   });
 
+  const introVideo = document.querySelector('[data-intro-video]');
+  const videoPoster = introVideo?.querySelector('.intro-video-poster');
+  if (introVideo && videoPoster) {
+    videoPoster.addEventListener('click', () => {
+      const videoId = introVideo.dataset.videoId;
+      if (!videoId) return;
+
+      const iframe = document.createElement('iframe');
+      iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&playsinline=1`;
+      iframe.title = '마이서브노트 소개 영상';
+      iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+      iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+      iframe.allowFullscreen = true;
+      introVideo.replaceChildren(iframe);
+    });
+  }
+
   const menuBtn = document.querySelector('.menu-toggle');
   const nav = document.querySelector('.navlinks');
   if (menuBtn && nav) {
