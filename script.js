@@ -1,4 +1,10 @@
 (() => {
+  document.querySelectorAll('[data-app-notice]').forEach((trigger) => {
+    trigger.addEventListener('click', () => {
+      window.alert('현재 앱 준비중입니다');
+    });
+  });
+
   const menuBtn = document.querySelector('.menu-toggle');
   const nav = document.querySelector('.navlinks');
   if (menuBtn && nav) {
