@@ -111,12 +111,21 @@
     const detailTitle = viewer.querySelector('[data-detail-title]');
     const detailDesc = viewer.querySelector('[data-detail-desc]');
     const viewerStep = viewer.querySelector('[data-viewer-step]');
-    const videoId = viewer.dataset.videoId;
+    const videoSrc = viewer.dataset.videoSrc;
     let activeIndex = 0;
+    let activeVideo = null;
+    let segmentFrame = 0;
 
     if (!tabs.length || !sessionList || !poster || !embed || !stageThumb) return;
 
     const stopVideo = () => {
+      cancelAnimationFrame(segmentFrame);
+      if (activeVideo) {
+        activeVideo.pause();
+        activeVideo.removeAttribute('src');
+        activeVideo.load();
+        activeVideo = null;
+      }
       embed.replaceChildren();
       embed.hidden = true;
       poster.hidden = false;
@@ -145,19 +154,138 @@
 
     poster.addEventListener('click', () => {
       const tab = tabs[activeIndex];
-      if (!videoId || !tab) return;
+      if (!videoSrc || !tab) return;
       const start = Number(tab.dataset.start || 0);
       const end = Number(tab.dataset.end || 0);
-      const endParam = end > start ? `&end=${end}` : '';
-      const iframe = document.createElement('iframe');
-      iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&playsinline=1&controls=0&fs=0&disablekb=1&iv_load_policy=3&start=${start}${endParam}`;
-      iframe.title = `${tab.dataset.title} | 마이서브노트 사용가이드`;
-      iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
-      iframe.referrerPolicy = 'strict-origin-when-cross-origin';
-      iframe.allowFullscreen = true;
+      const segmentLength = Math.max(0, end - start);
+      const formatTime = (seconds) => {
+        const value = Math.max(0, Math.floor(Number(seconds) || 0));
+        return `${Math.floor(value / 60)}:${String(value % 60).padStart(2, '0')}`;
+      };
+      const shell = document.createElement('div');
+      shell.className = 'session-video-shell controls-visible';
+      const video = document.createElement('video');
+      activeVideo = video;
+      const mediaFragment = end > start ? `#t=${start},${end}` : (start > 0 ? `#t=${start}` : '');
+      video.src = `${videoSrc}${mediaFragment}`;
+      video.preload = 'auto';
+      video.controls = false;
+      video.playsInline = true;
+      video.setAttribute('disablePictureInPicture', '');
+      video.setAttribute('aria-label', `${tab.dataset.title} | 마이서브노트 사용가이드`);
+      video.tabIndex = 0;
+
+      const controls = document.createElement('div');
+      controls.className = 'session-video-controls';
+      controls.innerHTML = `
+        <button class="video-control-toggle" type="button" aria-label="일시정지"><span aria-hidden="true">❚❚</span></button>
+        <input class="video-control-progress" type="range" min="0" max="${segmentLength || 1}" step="0.05" value="0" aria-label="재생 위치">
+        <span class="video-control-time">0:00 / ${formatTime(segmentLength)}</span>
+        <button class="video-control-mute" type="button" aria-label="음소거"><span aria-hidden="true">소리</span></button>
+        <button class="video-control-fullscreen" type="button" aria-label="전체 화면"><span aria-hidden="true">전체화면</span></button>`;
+      const toggle = controls.querySelector('.video-control-toggle');
+      const progress = controls.querySelector('.video-control-progress');
+      const time = controls.querySelector('.video-control-time');
+      const mute = controls.querySelector('.video-control-mute');
+      const fullscreen = controls.querySelector('.video-control-fullscreen');
+      let controlsTimer = 0;
+
+      const updateToggle = () => {
+        const playing = !video.paused && !video.ended;
+        toggle.innerHTML = playing ? '<span aria-hidden="true">❚❚</span>' : '<span aria-hidden="true">▶</span>';
+        toggle.setAttribute('aria-label', playing ? '일시정지' : '재생');
+      };
+      const updateProgress = () => {
+        const elapsed = Math.min(segmentLength || Infinity, Math.max(0, video.currentTime - start));
+        progress.value = String(Number.isFinite(elapsed) ? elapsed : 0);
+        time.textContent = `${formatTime(elapsed)} / ${formatTime(segmentLength)}`;
+      };
+      const showControls = () => {
+        shell.classList.add('controls-visible');
+        clearTimeout(controlsTimer);
+        if (!video.paused) controlsTimer = setTimeout(() => shell.classList.remove('controls-visible'), 1800);
+      };
+      const togglePlayback = () => {
+        if (video.paused) {
+          if (end > start && video.currentTime >= end - 0.05) video.currentTime = start;
+          video.play().catch(() => {});
+        } else {
+          video.pause();
+        }
+      };
+
+      const enforceSegment = () => {
+        if (activeVideo !== video) return;
+        if (end > start && video.currentTime >= end - 0.05) {
+          video.pause();
+          video.currentTime = end;
+          updateProgress();
+          updateToggle();
+          showControls();
+          return;
+        }
+        updateProgress();
+        segmentFrame = requestAnimationFrame(enforceSegment);
+      };
+
+      video.addEventListener('loadedmetadata', () => {
+        const playFromStart = () => video.play().catch(() => {});
+        if (start > 0 && Math.abs(video.currentTime - start) > 0.25) {
+          video.addEventListener('seeked', playFromStart, { once: true });
+          video.currentTime = Math.min(start, video.duration || start);
+        } else {
+          playFromStart();
+        }
+      }, { once: true });
+      video.addEventListener('play', () => {
+        if (end > start && (video.currentTime >= end - 0.05 || video.currentTime < start)) {
+          video.currentTime = start;
+        }
+        updateToggle();
+        showControls();
+        cancelAnimationFrame(segmentFrame);
+        segmentFrame = requestAnimationFrame(enforceSegment);
+      });
+      video.addEventListener('pause', () => {
+        cancelAnimationFrame(segmentFrame);
+        updateToggle();
+        showControls();
+      });
+      video.addEventListener('seeking', () => {
+        if (video.currentTime < start) video.currentTime = start;
+        if (end > start && video.currentTime > end) video.currentTime = end;
+      });
+      video.addEventListener('timeupdate', updateProgress);
+      video.addEventListener('click', togglePlayback);
+      video.addEventListener('keydown', (event) => {
+        if (event.key !== ' ' && event.key !== 'Enter') return;
+        event.preventDefault();
+        togglePlayback();
+      });
+      toggle.addEventListener('click', togglePlayback);
+      progress.addEventListener('input', () => {
+        video.currentTime = start + Number(progress.value);
+        updateProgress();
+      });
+      mute.addEventListener('click', () => {
+        video.muted = !video.muted;
+        mute.innerHTML = video.muted ? '<span aria-hidden="true">음소거</span>' : '<span aria-hidden="true">소리</span>';
+        mute.setAttribute('aria-label', video.muted ? '음소거 해제' : '음소거');
+        showControls();
+      });
+      fullscreen.addEventListener('click', () => {
+        if (document.fullscreenElement) document.exitFullscreen?.();
+        else shell.requestFullscreen?.();
+      });
+      shell.addEventListener('pointermove', showControls);
+      shell.addEventListener('pointerleave', () => {
+        if (!video.paused) shell.classList.remove('controls-visible');
+      });
+
+      shell.append(video, controls);
       poster.hidden = true;
       embed.hidden = false;
-      embed.replaceChildren(iframe);
+      embed.replaceChildren(shell);
     });
 
     let dragging = false;
