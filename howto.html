@@ -91,7 +91,13 @@
 <script>
 (()=>{
  const fullscreenSelector='.video-control-fullscreen';
- document.addEventListener('click',(event)=>{
+ const lockLandscape=async()=>{
+  try{await screen.orientation?.lock?.('landscape')}catch(_){/* 기기 또는 브라우저가 방향 잠금을 허용하지 않음 */}
+ };
+ const unlockOrientation=()=>{
+  try{screen.orientation?.unlock?.()}catch(_){/* 지원하지 않는 브라우저 */}
+ };
+ document.addEventListener('click',async(event)=>{
   const control=event.target.closest('.session-video-controls button');
   if(control) requestAnimationFrame(()=>control.blur());
   const button=event.target.closest(fullscreenSelector);
@@ -101,15 +107,25 @@
   const shell=button.closest('.session-video-shell');
   const video=shell?.querySelector('video');
   if(document.fullscreenElement){
-   document.exitFullscreen?.();
+   await document.exitFullscreen?.();
+   unlockOrientation();
   }else if(shell?.requestFullscreen){
-   shell.requestFullscreen().catch(()=>video?.webkitEnterFullscreen?.());
+   try{
+    await shell.requestFullscreen();
+    await lockLandscape();
+   }catch(_){
+    video?.webkitEnterFullscreen?.();
+   }
   }else{
    video?.webkitEnterFullscreen?.();
   }
   requestAnimationFrame(()=>button.blur());
  },true);
- document.addEventListener('fullscreenchange',()=>requestAnimationFrame(()=>document.activeElement?.blur?.()));
+ document.addEventListener('fullscreenchange',()=>{
+  if(document.fullscreenElement)lockLandscape();
+  else unlockOrientation();
+  requestAnimationFrame(()=>document.activeElement?.blur?.());
+ });
 })();
 </script>
 </body></html>
