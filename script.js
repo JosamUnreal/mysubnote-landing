@@ -101,4 +101,112 @@
     track.addEventListener('pointercancel', finishDrag);
     track.addEventListener('dragstart', (e) => e.preventDefault());
   });
+
+  document.querySelectorAll('[data-session-viewer]').forEach((viewer) => {
+    const tabs = [...viewer.querySelectorAll('.session-tab')];
+    const sessionList = viewer.querySelector('.session-list');
+    const poster = viewer.querySelector('[data-video-poster]');
+    const embed = viewer.querySelector('[data-video-embed]');
+    const stageThumb = viewer.querySelector('[data-stage-thumb]');
+    const detailTitle = viewer.querySelector('[data-detail-title]');
+    const detailDesc = viewer.querySelector('[data-detail-desc]');
+    const viewerStep = viewer.querySelector('[data-viewer-step]');
+    const videoId = viewer.dataset.videoId;
+    let activeIndex = 0;
+
+    if (!tabs.length || !sessionList || !poster || !embed || !stageThumb) return;
+
+    const stopVideo = () => {
+      embed.replaceChildren();
+      embed.hidden = true;
+      poster.hidden = false;
+    };
+
+    const selectTab = (tab, index) => {
+      activeIndex = index;
+      stopVideo();
+      tabs.forEach((item, itemIndex) => {
+        const selected = itemIndex === index;
+        item.classList.toggle('active', selected);
+        item.setAttribute('aria-pressed', String(selected));
+      });
+      stageThumb.src = tab.dataset.thumb;
+      stageThumb.alt = `${tab.dataset.title} 튜토리얼 대표 이미지`;
+      poster.setAttribute('aria-label', `${tab.dataset.title} 영상 재생`);
+      if (detailTitle) detailTitle.textContent = tab.dataset.title;
+      if (detailDesc) detailDesc.textContent = tab.dataset.desc;
+      if (viewerStep) viewerStep.textContent = `${index + 1} / ${tabs.length}`;
+    };
+
+    tabs.forEach((tab, index) => {
+      tab.setAttribute('aria-pressed', String(index === 0));
+      tab.addEventListener('click', () => selectTab(tab, index));
+    });
+
+    poster.addEventListener('click', () => {
+      const tab = tabs[activeIndex];
+      if (!videoId || !tab) return;
+      const start = Number(tab.dataset.start || 0);
+      const iframe = document.createElement('iframe');
+      iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&playsinline=1&start=${start}`;
+      iframe.title = `${tab.dataset.title} | 마이서브노트 사용가이드`;
+      iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+      iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+      iframe.allowFullscreen = true;
+      poster.hidden = true;
+      embed.hidden = false;
+      embed.replaceChildren(iframe);
+    });
+
+    let dragging = false;
+    let startX = 0;
+    let startScroll = 0;
+    let suppressClick = false;
+    sessionList.addEventListener('pointerdown', (event) => {
+      if (event.pointerType !== 'mouse' || sessionList.scrollWidth <= sessionList.clientWidth) return;
+      dragging = true;
+      suppressClick = false;
+      startX = event.clientX;
+      startScroll = sessionList.scrollLeft;
+      sessionList.classList.add('dragging');
+      sessionList.setPointerCapture?.(event.pointerId);
+    });
+    sessionList.addEventListener('pointermove', (event) => {
+      if (!dragging) return;
+      const distance = event.clientX - startX;
+      if (Math.abs(distance) > 4) suppressClick = true;
+      sessionList.scrollLeft = startScroll - distance;
+    });
+    const finishDrag = (event) => {
+      if (!dragging) return;
+      dragging = false;
+      sessionList.classList.remove('dragging');
+      try { sessionList.releasePointerCapture?.(event.pointerId); } catch (_) {}
+      setTimeout(() => { suppressClick = false; }, 0);
+    };
+    sessionList.addEventListener('pointerup', finishDrag);
+    sessionList.addEventListener('pointercancel', finishDrag);
+    sessionList.addEventListener('click', (event) => {
+      if (!suppressClick) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }, true);
+    sessionList.addEventListener('wheel', (event) => {
+      if (sessionList.scrollWidth <= sessionList.clientWidth) return;
+      if (Math.abs(event.deltaY) > Math.abs(event.deltaX)) {
+        event.preventDefault();
+        sessionList.scrollLeft += event.deltaY;
+      }
+    }, { passive: false });
+    sessionList.addEventListener('keydown', (event) => {
+      if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+      const current = tabs.indexOf(document.activeElement);
+      if (current < 0) return;
+      event.preventDefault();
+      const next = Math.max(0, Math.min(tabs.length - 1, current + (event.key === 'ArrowRight' ? 1 : -1)));
+      tabs[next].focus();
+      tabs[next].click();
+      tabs[next].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    });
+  });
 })();
