@@ -1,13 +1,21 @@
 <!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>사용가이드 | 마이서브노트</title><link rel="stylesheet" href="styles.css"><style id="tutorial-player-control-fix">
 .session-video-shell:not(.controls-visible) .session-video-controls{opacity:0!important;transform:translateY(8px)!important;pointer-events:none!important}
+.video-stage,.video-poster,.session-video-shell,.session-video-shell *{-webkit-tap-highlight-color:transparent!important}
+.session-video-shell,.session-video-shell video,.session-video-controls{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.session-video-shell video:focus,.session-video-shell video:focus-visible{outline:none!important}
+.session-video-shell:fullscreen{background:#000!important}
+.session-video-shell::backdrop{background:#000}
+.session-video-controls button:active{background:rgba(255,255,255,.12)!important}
+.video-control-mute,.video-control-fullscreen{min-width:34px;padding:0!important;display:inline-grid;place-items:center}
+.video-control-mute span,.video-control-fullscreen span{display:none}
+.video-control-mute::before,.video-control-fullscreen::before{content:"";display:block;width:18px;height:18px;background:currentColor;-webkit-mask-position:center;-webkit-mask-repeat:no-repeat;-webkit-mask-size:contain;mask-position:center;mask-repeat:no-repeat;mask-size:contain}
+.video-control-mute::before{-webkit-mask-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAyNCAyNCcgZmlsbD0nbm9uZScgc3Ryb2tlPSdibGFjaycgc3Ryb2tlLXdpZHRoPScyJyBzdHJva2UtbGluZWNhcD0ncm91bmQnIHN0cm9rZS1saW5lam9pbj0ncm91bmQnPjxwYXRoIGQ9J00xMSA1IDYgOUgydjZoNGw1IDRWNVonLz48cGF0aCBkPSdNMTUuNSA4LjVhNSA1IDAgMCAxIDAgNycvPjxwYXRoIGQ9J00xOCA2YTkgOSAwIDAgMSAwIDEyJy8+PC9zdmc+");mask-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAyNCAyNCcgZmlsbD0nbm9uZScgc3Ryb2tlPSdibGFjaycgc3Ryb2tlLXdpZHRoPScyJyBzdHJva2UtbGluZWNhcD0ncm91bmQnIHN0cm9rZS1saW5lam9pbj0ncm91bmQnPjxwYXRoIGQ9J00xMSA1IDYgOUgydjZoNGw1IDRWNVonLz48cGF0aCBkPSdNMTUuNSA4LjVhNSA1IDAgMCAxIDAgNycvPjxwYXRoIGQ9J00xOCA2YTkgOSAwIDAgMSAwIDEyJy8+PC9zdmc+")}
+.video-control-mute[aria-label="음소거 해제"]::before{-webkit-mask-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAyNCAyNCcgZmlsbD0nbm9uZScgc3Ryb2tlPSdibGFjaycgc3Ryb2tlLXdpZHRoPScyJyBzdHJva2UtbGluZWNhcD0ncm91bmQnIHN0cm9rZS1saW5lam9pbj0ncm91bmQnPjxwYXRoIGQ9J00xMSA1IDYgOUgydjZoNGw1IDRWNVonLz48cGF0aCBkPSdtMTYgOSA1IDUnLz48cGF0aCBkPSdtMjEgOS01IDUnLz48L3N2Zz4=");mask-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAyNCAyNCcgZmlsbD0nbm9uZScgc3Ryb2tlPSdibGFjaycgc3Ryb2tlLXdpZHRoPScyJyBzdHJva2UtbGluZWNhcD0ncm91bmQnIHN0cm9rZS1saW5lam9pbj0ncm91bmQnPjxwYXRoIGQ9J00xMSA1IDYgOUgydjZoNGw1IDRWNVonLz48cGF0aCBkPSdtMTYgOSA1IDUnLz48cGF0aCBkPSdtMjEgOS01IDUnLz48L3N2Zz4=")}
+.video-control-fullscreen::before{width:17px;height:17px;-webkit-mask-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAyNCAyNCcgZmlsbD0nbm9uZScgc3Ryb2tlPSdibGFjaycgc3Ryb2tlLXdpZHRoPScyJyBzdHJva2UtbGluZWNhcD0ncm91bmQnIHN0cm9rZS1saW5lam9pbj0ncm91bmQnPjxwYXRoIGQ9J004IDNIM3Y1Jy8+PHBhdGggZD0nTTE2IDNoNXY1Jy8+PHBhdGggZD0nTTggMjFIM3YtNScvPjxwYXRoIGQ9J00xNiAyMWg1di01Jy8+PC9zdmc+");mask-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAyNCAyNCcgZmlsbD0nbm9uZScgc3Ryb2tlPSdibGFjaycgc3Ryb2tlLXdpZHRoPScyJyBzdHJva2UtbGluZWNhcD0ncm91bmQnIHN0cm9rZS1saW5lam9pbj0ncm91bmQnPjxwYXRoIGQ9J004IDNIM3Y1Jy8+PHBhdGggZD0nTTE2IDNoNXY1Jy8+PHBhdGggZD0nTTggMjFIM3YtNScvPjxwYXRoIGQ9J00xNiAyMWg1di01Jy8+PC9zdmc+")}
 @media(max-width:900px),(pointer:coarse){
  .session-video-controls{grid-template-columns:auto minmax(44px,1fr) auto auto auto;gap:5px}
  .video-control-fullscreen{display:block!important}
- .video-control-mute,.video-control-fullscreen{min-width:32px;padding:0 5px!important}
- .video-control-mute span,.video-control-fullscreen span{font-size:0}
- .video-control-mute span::after{content:"🔊";font-size:15px;line-height:1}
- .video-control-mute[aria-label="음소거 해제"] span::after{content:"🔇"}
- .video-control-fullscreen span::after{content:"⛶";font-size:19px;line-height:1}
+ .video-control-mute,.video-control-fullscreen{min-width:32px}
 }
 @media(orientation:landscape) and (max-height:560px){
  .session-video-controls{left:8px;right:8px;bottom:6px;padding:5px 7px}
