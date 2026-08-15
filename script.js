@@ -147,8 +147,10 @@
       const tab = tabs[activeIndex];
       if (!videoId || !tab) return;
       const start = Number(tab.dataset.start || 0);
+      const end = Number(tab.dataset.end || 0);
+      const endParam = end > start ? `&end=${end}` : '';
       const iframe = document.createElement('iframe');
-      iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&playsinline=1&start=${start}`;
+      iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&playsinline=1&start=${start}${endParam}`;
       iframe.title = `${tab.dataset.title} | 마이서브노트 사용가이드`;
       iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
       iframe.referrerPolicy = 'strict-origin-when-cross-origin';
