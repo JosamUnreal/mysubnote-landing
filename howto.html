@@ -1,4 +1,18 @@
-<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>사용가이드 | 마이서브노트</title><link rel="stylesheet" href="styles.css"></head><body>
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>사용가이드 | 마이서브노트</title><link rel="stylesheet" href="styles.css"><style id="tutorial-player-control-fix">
+.session-video-shell:not(.controls-visible) .session-video-controls{opacity:0!important;transform:translateY(8px)!important;pointer-events:none!important}
+@media(max-width:900px),(pointer:coarse){
+ .session-video-controls{grid-template-columns:auto minmax(44px,1fr) auto auto auto;gap:5px}
+ .video-control-fullscreen{display:block!important}
+ .video-control-mute,.video-control-fullscreen{min-width:32px;padding:0 5px!important}
+ .video-control-mute span,.video-control-fullscreen span{font-size:0}
+ .video-control-mute span::after{content:"🔊";font-size:15px;line-height:1}
+ .video-control-mute[aria-label="음소거 해제"] span::after{content:"🔇"}
+ .video-control-fullscreen span::after{content:"⛶";font-size:19px;line-height:1}
+}
+@media(orientation:landscape) and (max-height:560px){
+ .session-video-controls{left:8px;right:8px;bottom:6px;padding:5px 7px}
+}
+</style></head><body>
 <header class="header">
   <div class="container nav">
     <a class="brand" href="index.html"><img src="assets/logo.png" alt="마이서브노트 심볼"><span class="brand-words"><strong>마이서브노트</strong><small aria-label="MYSUBNOTE"><span>M</span><span>Y</span><span>S</span><span>U</span><span>B</span><span>N</span><span>O</span><span>T</span><span>E</span></small></span></a>
@@ -66,4 +80,28 @@
   </div>
 </footer>
 <script src="script.js"></script>
+<script>
+(()=>{
+ const fullscreenSelector='.video-control-fullscreen';
+ document.addEventListener('click',(event)=>{
+  const control=event.target.closest('.session-video-controls button');
+  if(control) requestAnimationFrame(()=>control.blur());
+  const button=event.target.closest(fullscreenSelector);
+  if(!button)return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  const shell=button.closest('.session-video-shell');
+  const video=shell?.querySelector('video');
+  if(document.fullscreenElement){
+   document.exitFullscreen?.();
+  }else if(shell?.requestFullscreen){
+   shell.requestFullscreen().catch(()=>video?.webkitEnterFullscreen?.());
+  }else{
+   video?.webkitEnterFullscreen?.();
+  }
+  requestAnimationFrame(()=>button.blur());
+ },true);
+ document.addEventListener('fullscreenchange',()=>requestAnimationFrame(()=>document.activeElement?.blur?.()));
+})();
+</script>
 </body></html>
