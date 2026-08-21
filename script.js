@@ -338,5 +338,37 @@
       tabs[next].click();
       tabs[next].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
     });
+
+    // 본문(영상 + 설명) 영역에서 좌우로 스와이프하면 이전/다음 튜토리얼로 넘어간다.
+    // 상단 탭을 직접 누르지 않아도 되도록 하기 위한 것. 모바일에서 특히 편하다.
+    const viewerMain = viewer.querySelector('.viewer-main');
+    if (viewerMain) {
+      let swipeX = null;
+      let swipeY = null;
+      const goToIndex = (index) => {
+        const clamped = Math.max(0, Math.min(tabs.length - 1, index));
+        if (clamped === activeIndex) return;
+        selectTab(tabs[clamped], clamped);
+        // 선택된 탭이 화면 밖에 있으면 보이도록 스크롤해준다(상단 탭 목록과 동기화)
+        tabs[clamped].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      };
+      viewerMain.addEventListener('touchstart', (event) => {
+        // 영상 재생 중에는 스와이프를 받지 않는다 — 재생바 조작과 헷갈리기 때문.
+        if (!embed.hidden) { swipeX = null; return; }
+        if (event.touches.length !== 1) { swipeX = null; return; }
+        swipeX = event.touches[0].clientX;
+        swipeY = event.touches[0].clientY;
+      }, { passive: true });
+      viewerMain.addEventListener('touchend', (event) => {
+        if (swipeX === null) return;
+        const touch = event.changedTouches[0];
+        const dx = touch.clientX - swipeX;
+        const dy = touch.clientY - swipeY;
+        swipeX = null;
+        // 세로 스크롤과 구분: 가로 이동이 세로보다 확실히 커야 하고, 최소 50px은 움직여야 한다.
+        if (Math.abs(dx) < 50 || Math.abs(dx) <= Math.abs(dy)) return;
+        goToIndex(activeIndex + (dx < 0 ? 1 : -1));
+      }, { passive: true });
+    }
   });
 })();
